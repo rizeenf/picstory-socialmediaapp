@@ -20,19 +20,23 @@ module.exports = {
     },
     extend: {
       colors: {
-        'primary-500': '#A27B5C',
-        'primary-600': '#81624a',
-        'secondary-500': '#DCD7C9',
-        'off-white': '#D0DFFF',
-        'red': '#FF5A5A',
-        'dark-1': '#2B2B2F',
-        'dark-2': '#1F1F22',
-        'dark-3': '#131315',
-        'dark-4': '#070707',
-        'light-1': '#FFFFFF',
-        'light-2': '#EFEFEF',
-        'light-3': '#7878A3',
-        'light-4': '#5C5C7B',
+        'primary-500': '#FFB74D', // Warm accent color (Orange)
+        'primary-600': '#FF9800', // Slightly darker accent (Deep Orange)
+        'secondary-500': '#90CAF9', // Light secondary color for contrast (Light Blue)
+        'off-white': '#B3E5FC', // Soft light color for contrast (Very Light Blue)
+        'red': '#E57373', // Softer red for alerts and emphasis
+        'dark-1': '#121212', // Main background color (Dark Gray)
+        'dark-2': '#1E1E1E', // Secondary background color (Slightly Lighter Dark Gray)
+        'dark-3': '#242424', // Tertiary background color (Lighter Dark Gray)
+        'dark-4': '#2C2C2C', // Darkest background color (Deep Gray)
+        'light-1': '#FFFFFF', // Pure white for text and highlights
+        'light-2': '#E0E0E0', // Light gray for text and highlights
+        'light-3': '#B0BEC5', // Muted light color for secondary text (Light Gray Blue)
+        'light-4': '#90A4AE', // Muted light color for tertiary text (Gray Blue)
+        'accent-1': '#FFD700', // Gold accent for highlights
+        'accent-2': '#00BFFF', // Deep sky blue for highlights
+        'accent-3': '#32CD32', // Lime green for positive actions
+        'accent-4': '#FF8C00', // Dark orange for warnings
       },
       screens: {
         'xs': '480px',
@@ -59,6 +63,7 @@ module.exports = {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        ping: 'ping 1s cubic-bezier(0.5, 0.7, 0.2, 0.2)',
       },
     },
   },

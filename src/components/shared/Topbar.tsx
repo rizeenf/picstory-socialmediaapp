@@ -30,7 +30,7 @@ const Topbar = () => {
         <div className="flex gap-4">
           <Button
             variant={"ghost"}
-            className='shad-button_ghost'
+            className='shad-button_ghost hover:invert-dark'
             onClick={() => signOut()}
           >
             <img

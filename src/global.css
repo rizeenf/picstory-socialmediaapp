@@ -77,6 +77,14 @@
     @apply invert brightness-0 transition;
   }
 
+  .invert-dark {
+    @apply brightness-75 transition;
+  }
+
+  .darker {
+    @apply brightness-90 transition;
+  }
+
   .flex-center {
     @apply flex justify-center items-center;
   }

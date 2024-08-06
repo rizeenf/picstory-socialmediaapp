@@ -8,8 +8,8 @@ type FileUploaderProps = {
   mediaUrl: string
 }
 
-const FileUploader = ({ fieldChange }: FileUploaderProps) => {
-  const [fileUrl, setFileUrl] = useState('')
+const FileUploader = ({ fieldChange, mediaUrl }: FileUploaderProps) => {
+  const [fileUrl, setFileUrl] = useState(mediaUrl)
   const [file, setFile] = useState<File[]>([])
 
   const onDrop = useCallback(
@@ -59,7 +59,7 @@ const FileUploader = ({ fieldChange }: FileUploaderProps) => {
             <h3 className="base-medium text-light-2 mb-2 mt-6">Drag photo here</h3>
             <p className="text-light-4 small-regular mb-6">SVG, PNG, JPG</p>
 
-            <Button className="shad-button_dark_4">
+            <Button className="shad-button_dark_4 hover:invert-dark">
               Select from computer
             </Button>
           </div>)

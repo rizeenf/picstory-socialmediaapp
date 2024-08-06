@@ -128,7 +128,7 @@ const SignupForm = () => {
               </FormItem>
             )}
           />
-          <Button type="submit" className="shad-button_primary"
+          <Button type="submit" className="shad-button_primary hover:invert-dark"
             disabled={isCreatingAccount}
           >
             {isCreatingAccount

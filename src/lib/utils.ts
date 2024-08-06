@@ -27,3 +27,8 @@ export const timeAgo = (timestamp: string) => {
     return `${diffDays} days ago`;
   }
 }
+
+
+export const checkIsLiked = (likeList: string[], userId: string) => {
+  return likeList.includes(userId)
+}

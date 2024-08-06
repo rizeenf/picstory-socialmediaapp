@@ -8,7 +8,7 @@ import { Button } from "../ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
 import { Input } from "../ui/input"
 import { Textarea } from "../ui/textarea"
-import { useCreatePost } from "@/lib/react-query/queriesAndMutations"
+import { useCreatePost, useUpdatePost } from "@/lib/react-query/queriesAndMutations"
 import { useUserContext } from "@/context/AuthContext"
 import { toast } from "../ui/use-toast"
 import { useNavigate } from "react-router-dom"
@@ -16,13 +16,18 @@ import Loader from "@/components/shared/Loader"
 
 
 type PostFormProps = {
-  post?: Models.Document
+  post?: Models.Document,
+  action: "create" | "update"
 }
 
-const PostForm = ({ post }: PostFormProps) => {
+const PostForm = ({ post, action }: PostFormProps) => {
   const { mutateAsync: createPost, isPending: isCreatingPost } = useCreatePost()
+  const { mutateAsync: updatePost, isPending: isLoadingUpdate } = useUpdatePost()
+
   const { user } = useUserContext()
   const navigate = useNavigate()
+
+  console.log(post)
 
   const form = useForm<z.infer<typeof PostValidation>>({
     resolver: zodResolver(PostValidation),
@@ -35,6 +40,21 @@ const PostForm = ({ post }: PostFormProps) => {
   })
 
   const onSubmit = async (data: z.infer<typeof PostValidation>) => {
+    if (post && action === 'update') {
+      const updatedPost = await updatePost({
+        ...data,
+        postId: post.$id,
+        imageId: post?.imageId,
+        imageUrl: post?.imageUrl,
+      })
+
+      if (!updatedPost) {
+        toast({ title: 'Failed, please try again.' })
+      }
+
+      return navigate(`/posts/${post?.$id}`)
+    }
+
     const newPost = await createPost({
       ...data,
       userId: user?.id
@@ -116,21 +136,21 @@ const PostForm = ({ post }: PostFormProps) => {
         <div className="flex gap-4 items-center justify-end">
           <Button
             type="button"
-            className="shad-button_dark_4">
+            className="shad-button_dark_4 hover:invert-dark">
             Cancel
           </Button>
 
           <Button
-            disabled={isCreatingPost}
+            disabled={isCreatingPost || isLoadingUpdate}
             type="submit"
-            className="shad-button_primary whitespace-nowrap">
-            {isCreatingPost
+            className="shad-button_primary whitespace-nowrap capitalize hover:invert-dark">
+            {isCreatingPost || isLoadingUpdate
               ?
               <div className="flex-center gap-2">
                 <Loader /> Loading...
               </div>
               :
-              "Submit"
+              action
             }
           </Button>
         </div>
