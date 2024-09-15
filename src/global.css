@@ -236,7 +236,7 @@
 
   /* Post Card */
   .post-card {
-    @apply bg-dark-2 rounded-3xl border border-dark-4 p-5 lg:p-7 w-full max-w-screen-sm;
+    @apply bg-dark-2 rounded-[2rem] border border-dark-4 p-5 lg:p-7 w-full max-w-screen-sm;
   }
 
   .post-card_img {

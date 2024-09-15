@@ -1,24 +1,42 @@
 import { ID, ImageGravity, Query } from 'appwrite'
 import { INewPost, INewUser, IUpdatePost } from "@/types";
-import { account, appwriteConfig, avatars, databases, storage } from "./config";
+import { appwriteConfig, avatars, databases, storage } from "./config";
+import { supabase, supabaseUrl } from '../supabase/connect';
 
 export const createUserAccount = async (user: INewUser) => {
   try {
-    const newAccount = await account.create(
-      ID.unique(),
-      user.email,
-      user.password,
-      user.name
-    )
+    // Using Appwrite
+    // const newAccount = await account.create(
+    //   ID.unique(),
+    //   user.email,
+    //   user.password,
+    //   user.name
+    // )
 
-    if (!newAccount) throw Error;
+    // const newUser = await saveUserToDB({
+    //   accountId: newAccount.$id,
+    //   name: newAccount.name,
+    //   email: newAccount.email,
+    //   username: user.username,
+    //   imageUrl: avatarUrl
+    // })
 
     const avatarUrl = avatars.getInitials(user.name)
 
+    const { data: newAccount, error } = await supabase.auth.signUp({
+      email: user.email,
+      password: user.password,
+    })
+
+    if (error) {
+      console.error("Error sign up user:", error);
+      return
+    }
+
     const newUser = await saveUserToDB({
-      accountId: newAccount.$id,
-      name: newAccount.name,
-      email: newAccount.email,
+      accountId: newAccount.user?.id!,
+      name: user.name,
+      email: newAccount.user?.email!,
       username: user.username,
       imageUrl: avatarUrl
     })
@@ -39,12 +57,27 @@ export const saveUserToDB = async (user: {
   username?: string;
 }) => {
   try {
-    const newUser = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.userCollectionId,
-      ID.unique(),
-      user,
-    )
+    // Using Appwrite
+    // const newUser = await databases.createDocument(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.userCollectionId,
+    //   ID.unique(),
+    //   user,
+    // )
+
+    const { data: newUser, error } = await supabase
+      .from('Users')
+      .insert([
+        {
+          ...user,
+        },
+      ])
+      .select()
+
+    if (error) {
+      console.error("Error saving user to DB:", error);
+      return
+    }
 
     return newUser
   } catch (error) {
@@ -54,16 +87,43 @@ export const saveUserToDB = async (user: {
 
 }
 
+export const checkRegisteredUser = async (user: {
+  email: string;
+  username: string;
+}) => {
+  try {
+    const { email, username } = user
+
+    let { data: registeredUser } = await supabase
+      .from('Users')
+      .select("*")
+      .or(`email.eq.${email},username.eq.${username}`)
+
+    return registeredUser
+  } catch (error) {
+    console.log(error)
+  }
+
+}
+
 export const signInAccount = async (user: {
   email: string;
   password: string;
 }) => {
   try {
-    const session = await account.createEmailPasswordSession(
-      user.email,
-      user.password
-    )
+    // Using Appwrite
+    // const session = await account.createEmailPasswordSession(
+    //   user.email,
+    //   user.password
+    // )
 
+    const { email, password } = user
+
+    const session = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+    console.log(session, 'session')
     return session
   } catch (error) {
     console.log(error)
@@ -73,7 +133,11 @@ export const signInAccount = async (user: {
 
 export async function getAccount() {
   try {
-    const currentAccount = await account.get();
+    // Using Appwrite
+    // const currentAccount = await account.get();
+
+    const currentAccount = await supabase.auth.getSession();
+    console.log(currentAccount, 'getSession')
 
     return currentAccount;
   } catch (error) {
@@ -88,15 +152,24 @@ export const getCurrentUser = async () => {
 
     if (!currentAccount) throw Error;
 
-    const currentUser = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.userCollectionId,
-      [Query.equal("accountId", currentAccount.$id)]
-    )
+    // Using Appwrite
+    // const currentUser = await databases.listDocuments(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.userCollectionId,
+    //   [Query.equal("accountId", currentAccount.$id)]
+    // )
 
-    if (!currentUser) throw Error;
 
-    return currentUser.documents[0]
+    // Checking user from table Users, based on Authentication User
+    let { data: currentUser, error } = await supabase
+      .from('Users')
+      .select("*")
+      .eq('accountId', currentAccount.data.session?.user.id)
+
+
+    if (!currentUser || error) throw Error;
+    console.log(currentUser, 'currentUser')
+    return currentUser[0]
   } catch (error) {
     console.log(error)
     return null
@@ -105,7 +178,9 @@ export const getCurrentUser = async () => {
 
 export const signOutAccount = async () => {
   try {
-    const session = await account.deleteSession("current")
+    // const session = await account.deleteSession("current")
+
+    const session = await supabase.auth.signOut()
 
     return session
   } catch (error) {
@@ -116,11 +191,19 @@ export const signOutAccount = async () => {
 
 export const uploadFile = async (file: File) => {
   try {
-    const uploadedFile = await storage.createFile(
-      appwriteConfig.storageId,
-      ID.unique(),
-      file
-    )
+    // Using Appwrite
+    // const uploadedFile = await storage.createFile(
+    //   appwriteConfig.storageId,
+    //   ID.unique(),
+    //   file
+    // )
+    const currentAccount = await getAccount()
+
+    const { data: uploadedFile } = await supabase.storage
+      .from('media')
+      .upload(`public/media_${currentAccount?.data.session?.user.email}${Date.now()}`, file)
+
+    console.log(uploadedFile, ' uploadedFile')
 
     return uploadedFile
   } catch (error) {
@@ -129,19 +212,27 @@ export const uploadFile = async (file: File) => {
   }
 }
 
-export const getFilePreview = (fileId: string) => {
+export const getFilePreview = async (fileId: string) => {
   try {
-    const fileUrl = storage.getFilePreview(
-      appwriteConfig.storageId,
-      fileId,
-      2000,
-      2000,
-      ImageGravity.Top,
-      100,
-    )
+    // Using Appwrite
+    // const fileUrl = storage.getFilePreview(
+    //   appwriteConfig.storageId,
+    //   fileId,
+    //   2000,
+    //   2000,
+    //   ImageGravity.Top,
+    //   100,
+    // )
 
-    if (!fileUrl) throw Error
+    // if (!fileUrl) throw Error
 
+
+    const { data } = await supabase.storage
+      .from('media')
+      .getPublicUrl(fileId)
+
+    let fileUrl = `${supabaseUrl}/storage/v1/object/public/${data.publicUrl}`
+    console.log(fileUrl, 'fileUrl')
     return fileUrl
   } catch (error) {
     console.log(error)
@@ -170,11 +261,10 @@ export const createPost = async (post: INewPost) => {
     if (!uploadedFile) throw Error
 
 
-
-    const fileUrl = getFilePreview(uploadedFile.$id)
+    const fileUrl = getFilePreview(uploadedFile.id)
 
     if (!fileUrl) {
-      await deleteFile(uploadedFile.$id)
+      await deleteFile(uploadedFile.id)
       throw Error
     }
 
@@ -192,12 +282,12 @@ export const createPost = async (post: INewPost) => {
         location: post.location,
         tags: tags,
         imageUrl: fileUrl,
-        imageId: uploadedFile.$id
+        imageId: uploadedFile.id
       }
     )
 
     if (!newPost) {
-      await deleteFile(uploadedFile.$id)
+      await deleteFile(uploadedFile.id)
       throw Error
     }
 
@@ -317,13 +407,13 @@ export const updatePost = async (post: IUpdatePost) => {
       const uploadedFile = await uploadFile(post.file[0])
       if (!uploadedFile) throw Error
 
-      const fileUrl = getFilePreview(uploadedFile.$id)
+      const fileUrl = getFilePreview(uploadedFile.id)
       if (!fileUrl) {
-        await deleteFile(uploadedFile.$id)
+        await deleteFile(uploadedFile.id)
         throw Error
       }
 
-      image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.$id, }
+      image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.id, }
     }
 
     const tags = post?.tags?.replace(/ /g, "").split(",") || []

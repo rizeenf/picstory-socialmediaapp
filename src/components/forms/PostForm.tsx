@@ -38,6 +38,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
       tags: post ? post?.tags.join(',') : "",
     }
   })
+  const { handleSubmit, control } = form
 
   const onSubmit = async (data: z.infer<typeof PostValidation>) => {
     if (post && action === 'update') {
@@ -71,10 +72,10 @@ const PostForm = ({ post, action }: PostFormProps) => {
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col gap-9 w-full max-w-5xl">
         <FormField
-          control={form.control}
+          control={control}
           name="caption"
           render={({ field }) => (
             <FormItem>
@@ -87,7 +88,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
           )}
         />
         <FormField
-          control={form.control}
+          control={control}
           name="file"
           render={({ field }) => (
             <FormItem>
@@ -103,7 +104,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
           )}
         />
         <FormField
-          control={form.control}
+          control={control}
           name="location"
           render={({ field }) => (
             <FormItem>
@@ -116,7 +117,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
           )}
         />
         <FormField
-          control={form.control}
+          control={control}
           name="tags"
           render={({ field }) => (
             <FormItem>

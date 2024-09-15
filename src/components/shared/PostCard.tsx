@@ -16,7 +16,7 @@ const PostCard = ({ post }: PostCardProps) => {
 
 
   return (
-    <div className="post-card ">
+    <div className="post-card">
       <div className="flex-between">
         <div className="flex items-center gap-3 hover:darker">
           <Link to={`/profile/${post.creator.$id}`}>

@@ -12,6 +12,8 @@ import { Link, useNavigate } from "react-router-dom"
 import { useToast } from "@/components/ui/use-toast"
 import { useCreateUserAccount, useSignInAccount } from "@/lib/react-query/queriesAndMutations"
 import { useUserContext } from "@/context/AuthContext"
+import { checkRegisteredUser } from "@/lib/appwrite/api"
+import { ToastAction } from "@/components/ui/toast"
 
 
 
@@ -30,12 +32,26 @@ const SignupForm = () => {
       password: ''
     },
   })
+  const { reset, handleSubmit, control } = form
 
   const { mutateAsync: createUserAccount, isPending: isCreatingAccount } = useCreateUserAccount()
   const { mutateAsync: signInAccount } = useSignInAccount()
 
 
   const onSubmit = async (values: z.infer<typeof SignupValidation>) => {
+    // Check is user registered
+    const registeredUser = await checkRegisteredUser({
+      email: values.email,
+      username: values.username
+    })
+    if (registeredUser && registeredUser.length > 0) {
+      return toast({
+        title: 'This email or username is already registered. Please sign in instead.',
+        action: <ToastAction altText="Sign in" onClick={() => navigate('/signin')}>Go to Sign in</ToastAction>
+      })
+    }
+
+    // if user not registered, sign up 
     const newUser = await createUserAccount(values)
 
     if (!newUser) {
@@ -49,14 +65,17 @@ const SignupForm = () => {
       password: values.password
     })
 
-    if (!session) {
+    if (session?.error?.code === 'email_not_confirmed') {
+      reset()
+      return toast({ title: 'A verification link has already been sent. Please check your email inbox.' });
+    } else if (!!session?.error) {
       return toast({ title: 'Sign in failed. Please try again' })
     }
 
     const isLoggedIn = await checkAuthUser()
 
     if (isLoggedIn) {
-      form.reset()
+      reset()
       navigate('/')
     } else {
       return toast({ title: 'Sign up failed. Please try again' })
@@ -66,15 +85,15 @@ const SignupForm = () => {
   return (
     <Form {...form}>
       <div className="sm:w-420 flex-center flex-col">
-        <img src="/assets/image/logo.png" alt="logo" className="w-8 h-8" />
+        <img src="/assets/image/logo.webp" alt="logo" className="w-8 h-8" />
 
         <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12">Create a new account</h2>
         <p className="text-light-3 small-medium md:base-regular mt-2">
           To use Picrizy, please enter your details</p>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5 w-full mt-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 w-full mt-4">
           <FormField
-            control={form.control}
+            control={control}
             name="name"
             render={({ field }) => (
               <FormItem>
@@ -90,7 +109,7 @@ const SignupForm = () => {
             )}
           />
           <FormField
-            control={form.control}
+            control={control}
             name="username"
             render={({ field }) => (
               <FormItem>
@@ -103,7 +122,7 @@ const SignupForm = () => {
             )}
           />
           <FormField
-            control={form.control}
+            control={control}
             name="email"
             render={({ field }) => (
               <FormItem>
@@ -116,7 +135,7 @@ const SignupForm = () => {
             )}
           />
           <FormField
-            control={form.control}
+            control={control}
             name="password"
             render={({ field }) => (
               <FormItem>

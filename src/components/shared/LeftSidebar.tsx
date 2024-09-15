@@ -23,7 +23,7 @@ const LeftSidebar = () => {
       <div className="flex flex-col gap-11">
         <Link to={"/"} className='flex gap-3 items-center justify-center'>
           <img
-            src='/assets/image/logo.png'
+            src='/assets/image/logo.webp'
             alt='logo'
             width={40}
             height={40}

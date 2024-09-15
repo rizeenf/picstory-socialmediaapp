@@ -28,6 +28,7 @@ const SigninForm = () => {
       password: ''
     },
   })
+  const { reset, handleSubmit, control } = form
 
   const { mutateAsync: signInAccount, isPending: isSigninIn } = useSignInAccount()
 
@@ -44,7 +45,7 @@ const SigninForm = () => {
     const isLoggedIn = await checkAuthUser()
 
     if (isLoggedIn) {
-      form.reset()
+      reset()
       navigate('/')
     } else {
       toast({ title: 'Sign in failed. Please try again' })
@@ -55,15 +56,15 @@ const SigninForm = () => {
   return (
     <Form {...form}>
       <div className="sm:w-420 flex-center flex-col">
-        <img src="/assets/image/logo.png" alt="logo" className="w-8 h-8" />
+        <img src="/assets/image/logo.webp" alt="logo" className="w-8 h-8" />
 
         <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12">Log in to your account</h2>
         <p className="text-light-3 small-medium md:base-regular mt-2">
           Welcome back! please enter your details</p>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5 w-full mt-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5 w-full mt-4">
           <FormField
-            control={form.control}
+            control={control}
             name="email"
             render={({ field }) => (
               <FormItem>
@@ -76,7 +77,7 @@ const SigninForm = () => {
             )}
           />
           <FormField
-            control={form.control}
+            control={control}
             name="password"
             render={({ field }) => (
               <FormItem>
