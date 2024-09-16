@@ -1,3 +1,4 @@
+import { Database } from "@/lib/supabase/supabase_types";
 import React from "react";
 
 export type INewUser = {
@@ -48,3 +49,11 @@ export type IUpdatePost = {
   location?: string;
   tags?: string;
 };
+
+export type Post = Database["public"]["Tables"]["Posts"]["Row"];
+export type User = Database["public"]["Tables"]["Users"]["Row"];
+export type Save = Database["public"]["Tables"]["Saves"]["Row"];
+
+export interface PostWithUser extends Omit<Post, "creator"> {
+  creator: User;
+}

@@ -1,29 +1,26 @@
-import { useUserContext } from "@/context/AuthContext"
-import { timeAgo } from "@/lib/utils"
-import { Models } from "appwrite"
-import { Link } from "react-router-dom"
-import PostStats from "./PostStats"
+import { useUserContext } from "@/context/AuthContext";
+import { timeAgo } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import PostStats from "./PostStats";
+import { PostWithUser } from "@/types";
 
-type PostCardProps = {
-  post: Models.Document
-}
+const PostCard = ({ post }: { post: PostWithUser }) => {
+  const { user } = useUserContext();
 
-const PostCard = ({ post }: PostCardProps) => {
-  const { user } = useUserContext()
-
-  if (!post.creator) return
-
-
+  if (!post.creator) return;
 
   return (
     <div className="post-card">
       <div className="flex-between">
         <div className="flex items-center gap-3 hover:darker">
-          <Link to={`/profile/${post.creator.$id}`}>
+          <Link to={`/profile/${post.creator.id}`}>
             <img
-              src={post?.creator.imageUrl || '/assets/icons/profile-placeholder.svg'}
+              src={
+                post?.creator.imageUrl ||
+                "/assets/icons/profile-placeholder.svg"
+              }
               alt="creator"
-              className="rounded-full w-12 lg:h-12 "
+              className="w-12 rounded-full lg:h-12 "
             />
           </Link>
 
@@ -31,9 +28,9 @@ const PostCard = ({ post }: PostCardProps) => {
             <p className="base-medium lg:body-bold text-light-1 line-clamp-1 max-w-52">
               {post?.creator.name}
             </p>
-            <div className="flex-center gap-2 text-light-3">
+            <div className="gap-2 flex-center text-light-3">
               <p className="subtle-semibold lg:small-regular">
-                {timeAgo(post?.$createdAt)}
+                {timeAgo(post?.createdAt)}
               </p>
               -
               <p className="subtle-semibold lg:small-regular">
@@ -43,35 +40,31 @@ const PostCard = ({ post }: PostCardProps) => {
           </div>
         </div>
 
-        <Link to={`/update-post/${post.$id}`}
-          className={`hover:invert-white ${user?.id !== post?.creator?.$id && "hidden"}`}
+        <Link
+          to={`/update-post/${post.id}`}
+          className={`hover:invert-white ${
+            user?.id !== post?.creator?.id && "hidden"
+          }`}
         >
-          <img
-            src="/assets/icons/edit.svg"
-            alt="edit"
-            width={20}
-            height={20}
-          />
+          <img src="/assets/icons/edit.svg" alt="edit" width={20} height={20} />
         </Link>
       </div>
 
-      <Link to={`/posts/${post.$id}`}>
-        <div className="small-medium lg:base-medium py-5 hover:darker">
+      <Link to={`/posts/${post.id}`}>
+        <div className="py-5 small-medium lg:base-medium hover:darker">
           <p>{post.caption}</p>
 
           <ul className="flex gap-1 mt-2">
-            {
-              post?.tags?.map((tag: string) => (
-                <li key={tag} className="text-light-3 hover:invert-white">
-                  #{tag}
-                </li>
-              ))
-            }
+            {post?.tags?.map((tag: string, index) => (
+              <li key={tag + index} className="text-light-3 hover:invert-white">
+                #{tag}
+              </li>
+            ))}
           </ul>
         </div>
 
         <img
-          src={post?.imageUrl || '/assets/icons/profile-placeholder.svg'}
+          src={post?.imageUrl || "/assets/icons/profile-placeholder.svg"}
           alt="post"
           className="post-card_img"
         />
@@ -79,7 +72,7 @@ const PostCard = ({ post }: PostCardProps) => {
 
       <PostStats post={post} userId={user?.id} />
     </div>
-  )
-}
+  );
+};
 
-export default PostCard
+export default PostCard;

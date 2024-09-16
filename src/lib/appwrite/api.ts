@@ -1,6 +1,6 @@
-import { ID, Query } from "appwrite";
-import { INewPost, INewUser, IUpdatePost } from "@/types";
-import { appwriteConfig, avatars, databases, storage } from "./config";
+import { ID } from "appwrite";
+import { INewPost, INewUser, IUpdatePost, PostWithUser } from "@/types";
+import { appwriteConfig, avatars, databases } from "./config";
 import { supabase } from "../supabase/connect";
 
 export const createUserAccount = async (user: INewUser) => {
@@ -269,9 +269,8 @@ export const createPost = async (post: INewPost) => {
     let fileUrl = `${import.meta.env.VITE_SUPABASE_STORAGE_MEDIA_URL}/${
       uploadedFile.fullPath
     }`;
-    console.log(fileUrl, "fileUrlfileUrl");
 
-    const tags = post?.tags?.replace(/ /g, "").split(",") || [];
+    const tags = post?.tags?.split(" ") || [];
 
     // const newPost = await databases.createDocument(
     //   appwriteConfig.databaseId,
@@ -320,13 +319,23 @@ export const createPost = async (post: INewPost) => {
 
 export const getRecentPosts = async () => {
   try {
-    const posts = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      [Query.orderDesc("$createdAt"), Query.limit(20)]
-    );
+    // const posts = await databases.listDocuments(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.postCollectionId,
+    //   [Query.orderDesc("$createdAt"), Query.limit(20)]
+    // );
 
-    if (!posts) throw Error;
+    const { data: posts, error } = await supabase
+      .from("Posts")
+      .select("*, creator(*)")
+      .order("createdAt", {
+        ascending: false,
+      })
+      .limit(20)
+      .returns<PostWithUser[]>();
+
+    console.log(posts, "posts");
+    if (error) console.log(error, "errordd");
 
     return posts;
   } catch (error) {
@@ -337,16 +346,43 @@ export const getRecentPosts = async () => {
 
 export const likePost = async (postId: string, likesArray: string[]) => {
   try {
-    const updatedPost = await databases.updateDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      postId,
-      {
-        likes: likesArray,
-      }
-    );
+    // const updatedPost = await databases.updateDocument(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.postCollectionId,
+    //   postId,
+    //   {
+    //     likes: likesArray,
+    //   }
+    // );
 
-    if (!updatedPost) throw Error;
+    const { data: updatedPost, error } = await supabase
+      .from("Posts")
+      .update({
+        likedBy: likesArray,
+      })
+      .eq("id", postId);
+
+    const currentUser = await getCurrentUser();
+
+    let liked = currentUser?.liked || [];
+    let newLiked = [...liked];
+
+    let isAlreadyLiked = newLiked.includes(postId);
+
+    if (isAlreadyLiked) {
+      newLiked = newLiked.filter((id) => id !== postId);
+    } else {
+      newLiked.push(postId);
+    }
+
+    const { data: updatedUser, error: error2nd } = await supabase
+      .from("Users")
+      .update({
+        liked: newLiked,
+      })
+      .eq("id", currentUser?.id!);
+
+    if (error || error2nd || !updatedUser) throw Error;
 
     return updatedPost;
   } catch (error) {
@@ -357,17 +393,27 @@ export const likePost = async (postId: string, likesArray: string[]) => {
 
 export const savePost = async (postId: string, userId: string) => {
   try {
-    const updatedPost = await databases.createDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.saveCollectionId,
-      ID.unique(),
-      {
-        user: userId,
-        post: postId,
-      }
-    );
+    // const updatedPost = await databases.createDocument(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.saveCollectionId,
+    //   ID.unique(),
+    //   {
+    //     user: userId,
+    //     post: postId,
+    //   }
+    // );
 
-    if (!updatedPost) throw Error;
+    const { data: updatedPost, error } = await supabase
+      .from("Saves")
+      .insert([
+        {
+          post: postId,
+          user: userId,
+        },
+      ])
+      .select();
+
+    if (error) throw Error;
 
     return updatedPost;
   } catch (error) {
@@ -378,15 +424,20 @@ export const savePost = async (postId: string, userId: string) => {
 
 export const deleteSavedPost = async (saveRecordId: string) => {
   try {
-    const updatedPost = await databases.deleteDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.saveCollectionId,
-      saveRecordId
-    );
+    // const updatedPost = await databases.deleteDocument(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.saveCollectionId,
+    //   saveRecordId
+    // );
 
-    if (!updatedPost) throw Error;
+    const { data: updatedPost, error } = await supabase
+      .from("Saves")
+      .delete()
+      .eq("id", saveRecordId);
 
-    return { status: 200 };
+    if (error) throw Error;
+
+    return updatedPost;
   } catch (error) {
     console.log(error);
     throw new Error(`Error: ${error}`);
@@ -395,11 +446,19 @@ export const deleteSavedPost = async (saveRecordId: string) => {
 
 export const getPostById = async (postId: string) => {
   try {
-    const post = await databases.getDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      postId
-    );
+    // const post = await databases.getDocument(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.postCollectionId,
+    //   postId
+    // );
+
+    const { data: post, error } = await supabase
+      .from("Posts")
+      .select("*")
+      .eq("id", postId)
+      .single<PostWithUser>();
+
+    if (error) throw Error;
 
     return post;
   } catch (error) {
@@ -420,33 +479,51 @@ export const updatePost = async (post: IUpdatePost) => {
     if (hasFile) {
       const uploadedFile = await uploadFile(post.file[0]);
       if (!uploadedFile) throw Error;
-      console.log(uploadedFile, "updawoldwajkofjwa");
 
-      const fileUrl = await getFilePreview(uploadedFile.id);
-      if (!fileUrl) {
-        await deleteFile(uploadedFile.path);
-        throw Error;
-      }
+      // const fileUrl = await getFilePreview(uploadedFile.id);
+      // if (!fileUrl) {
+      //   await deleteFile(uploadedFile.path);
+      //   throw Error;
+      // }
+
+      let fileUrl = `${import.meta.env.VITE_SUPABASE_STORAGE_MEDIA_URL}/${
+        uploadedFile.fullPath
+      }`;
+
+      console.log(fileUrl, "udpatefileUrl");
 
       image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.id };
     }
 
-    const tags = post?.tags?.replace(/ /g, "").split(",") || [];
+    const tags = post?.tags?.split(" ") || [];
 
-    const updatePost = await databases.updateDocument(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      post.postId,
-      {
+    // const updatePost = await databases.updateDocument(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.postCollectionId,
+    //   post.postId,
+    //   {
+    //     caption: post.caption,
+    //     location: post.location,
+    //     tags: tags,
+    //     imageUrl: image.imageUrl,
+    //     imageId: image.imageId,
+    //   }
+    // );
+
+    const { data: updatePost, error } = await supabase
+      .from("Posts")
+      .update({
         caption: post.caption,
         location: post.location,
-        tags: tags,
+        tags,
         imageUrl: image.imageUrl,
         imageId: image.imageId,
-      }
-    );
+      })
+      .eq("id", post.postId)
+      .select()
+      .returns<PostWithUser>();
 
-    if (!updatePost) {
+    if (error) {
       await deleteFile(post.imageId);
       throw Error;
     }
@@ -480,20 +557,39 @@ export const getInfinitePosts = async ({
 }: {
   pageParam: string | number;
 }) => {
-  const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(6)];
+  // const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(6)];
 
-  if (pageParam) {
-    queries.push(Query.cursorAfter(pageParam.toString()));
-  }
+  // if (pageParam) {
+  //   queries.push(Query.cursorAfter(pageParam.toString()));
+  // }
 
   try {
-    const posts = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      queries
-    );
+    // const posts = await databases.listDocuments(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.postCollectionId,
+    //   queries
+    // );
 
-    if (!posts) throw Error;
+    let query = supabase
+      .from("Posts")
+      .select("*, creator(*)")
+      .order("createdAt", {
+        ascending: false,
+      })
+      .limit(2);
+
+    // if (pageParam) {
+    //   let toPages = +pageParam + 2;
+    //   query = query.range(+pageParam, toPages);
+    // }
+    // Apply cursor-based pagination if pageParam is provided
+    if (pageParam) {
+      query = query.lt("createdAt", pageParam); // Fetch records before the cursor
+    }
+
+    const { data: posts, error } = await query.returns<PostWithUser[]>();
+
+    if (error) throw Error;
 
     return posts;
   } catch (error) {
@@ -504,13 +600,19 @@ export const getInfinitePosts = async ({
 
 export const searchPosts = async (searchTerm: string) => {
   try {
-    const posts = await databases.listDocuments(
-      appwriteConfig.databaseId,
-      appwriteConfig.postCollectionId,
-      [Query.search("caption", searchTerm)]
-    );
+    // const posts = await databases.listDocuments(
+    //   appwriteConfig.databaseId,
+    //   appwriteConfig.postCollectionId,
+    //   [Query.search("caption", searchTerm)]
+    // );
 
-    if (!posts) throw Error;
+    const { data: posts, error } = await supabase
+      .from("Posts")
+      .select("*, creator(*)")
+      .eq("caption", searchTerm)
+      .returns<PostWithUser[]>();
+
+    if (error) throw Error;
 
     return posts;
   } catch (error) {

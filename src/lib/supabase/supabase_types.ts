@@ -12,6 +12,7 @@ export type Database = {
       Posts: {
         Row: {
           caption: string | null
+          createdAt: string
           creator: string
           id: string
           imageId: string
@@ -23,6 +24,7 @@ export type Database = {
         }
         Insert: {
           caption?: string | null
+          createdAt?: string
           creator: string
           id?: string
           imageId: string
@@ -34,6 +36,7 @@ export type Database = {
         }
         Update: {
           caption?: string | null
+          createdAt?: string
           creator?: string
           id?: string
           imageId?: string
@@ -90,31 +93,40 @@ export type Database = {
         Row: {
           accountId: string
           bio: string | null
+          createdAt: string
           email: string
           id: string
           imageId: string | null
           imageUrl: string | null
+          liked: string[] | null
           name: string | null
+          save: string[] | null
           username: string
         }
         Insert: {
           accountId: string
           bio?: string | null
+          createdAt?: string
           email: string
           id?: string
           imageId?: string | null
           imageUrl?: string | null
+          liked?: string[] | null
           name?: string | null
+          save?: string[] | null
           username: string
         }
         Update: {
           accountId?: string
           bio?: string | null
+          createdAt?: string
           email?: string
           id?: string
           imageId?: string | null
           imageUrl?: string | null
+          liked?: string[] | null
           name?: string | null
+          save?: string[] | null
           username?: string
         }
         Relationships: []
