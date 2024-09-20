@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  allFaces,
   createPost,
   createUserAccount,
   deletePost,
@@ -15,6 +16,7 @@ import {
   getPostById,
   getRecentPosts,
   likePost,
+  saveFaces,
   savePost,
   searchPosts,
   signInAccount,
@@ -58,6 +60,7 @@ export const useGetRecentPosts = () => {
   return useQuery({
     queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
     queryFn: () => getRecentPosts(),
+    refetchOnWindowFocus: false
   });
 };
 
@@ -73,7 +76,7 @@ export const useLikePost = () => {
     }) => likePost(postId, likesArray),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_POST_BY_ID, data],
+        queryKey: [QUERY_KEYS.GET_POST_BY_ID, data.id],
       });
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
@@ -107,6 +110,27 @@ export const useSavePost = () => {
   });
 };
 
+export const useGetAllFaces = () => {
+  return useQuery({
+    queryKey: ['GET_ALL_FACES'],
+    queryFn: allFaces,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export const useSaveFaceDescriptors = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (descriptor: Float32Array) =>
+      saveFaces(descriptor),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['GET_ALL_FACES'],
+      });
+    },
+  });
+};
+
 export const useDeleteSavedPost = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -130,6 +154,7 @@ export const useGetCurrentUser = () => {
   return useQuery({
     queryFn: getCurrentUser,
     queryKey: [QUERY_KEYS.GET_CURRENT_USER],
+    refetchOnWindowFocus: false
   });
 };
 
@@ -138,6 +163,7 @@ export const useGetPostById = (postId: string) => {
     queryKey: [QUERY_KEYS.GET_POST_BY_ID, postId],
     queryFn: () => getPostById(postId),
     enabled: !!postId,
+    refetchOnWindowFocus: false
   });
 };
 
@@ -188,5 +214,6 @@ export const useSearchPost = (searchTerm: string) => {
     queryKey: [QUERY_KEYS.SEARCH_POSTS, searchTerm],
     queryFn: () => searchPosts(searchTerm),
     enabled: !!searchTerm,
+    refetchOnWindowFocus: false
   });
 };

@@ -5,7 +5,7 @@ import {
   useSavePost,
 } from "@/lib/react-query/queriesAndMutations";
 import { checkIsLiked } from "@/lib/utils";
-import { PostWithUser, User } from "@/types";
+import { PostWithUser } from "@/types";
 import { useEffect, useState } from "react";
 
 type PostStatsProps = {

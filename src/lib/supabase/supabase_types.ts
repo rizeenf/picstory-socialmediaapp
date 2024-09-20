@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      Faces: {
+        Row: {
+          created_at: string
+          descriptor: Json | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          descriptor?: Json | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          descriptor?: Json | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       Posts: {
         Row: {
           caption: string | null
@@ -19,7 +40,7 @@ export type Database = {
           imageUrl: string
           likedBy: string[] | null
           location: string | null
-          saves: string | null
+          savedBy: string[] | null
           tags: string[] | null
         }
         Insert: {
@@ -31,7 +52,7 @@ export type Database = {
           imageUrl: string
           likedBy?: string[] | null
           location?: string | null
-          saves?: string | null
+          savedBy?: string[] | null
           tags?: string[] | null
         }
         Update: {
@@ -43,7 +64,7 @@ export type Database = {
           imageUrl?: string
           likedBy?: string[] | null
           location?: string | null
-          saves?: string | null
+          savedBy?: string[] | null
           tags?: string[] | null
         }
         Relationships: [

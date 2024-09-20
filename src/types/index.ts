@@ -53,6 +53,7 @@ export type IUpdatePost = {
 export type Post = Database["public"]["Tables"]["Posts"]["Row"];
 export type User = Database["public"]["Tables"]["Users"]["Row"];
 export type Save = Database["public"]["Tables"]["Saves"]["Row"];
+export type Face = Database["public"]["Tables"]["Faces"]["Row"];
 
 export interface PostWithUser extends Omit<Post, "creator"> {
   creator: User;

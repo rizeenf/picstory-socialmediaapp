@@ -1,5 +1,4 @@
-import { ID } from "appwrite";
-import { INewPost, INewUser, IUpdatePost, PostWithUser } from "@/types";
+import { INewPost, INewUser, IUpdatePost, PostWithUser, Save } from "@/types";
 import { appwriteConfig, avatars, databases } from "./config";
 import { supabase } from "../supabase/connect";
 
@@ -234,9 +233,8 @@ export const getFilePreview = async (fileId: string) => {
 
     const res = data?.find((item) => item.id == fileId);
 
-    let fileUrl = `${import.meta.env.VITE_SUPABASE_STORAGE_MEDIA_URL}/${
-      res?.name
-    }`;
+    let fileUrl = `${import.meta.env.VITE_SUPABASE_STORAGE_MEDIA_URL}/${res?.name
+      }`;
 
     return fileUrl;
   } catch (error) {
@@ -266,9 +264,8 @@ export const createPost = async (post: INewPost) => {
 
     if (!uploadedFile) throw Error;
 
-    let fileUrl = `${import.meta.env.VITE_SUPABASE_STORAGE_MEDIA_URL}/${
-      uploadedFile.fullPath
-    }`;
+    let fileUrl = `${import.meta.env.VITE_SUPABASE_STORAGE_MEDIA_URL}/${uploadedFile.fullPath
+      }`;
 
     const tags = post?.tags?.split(" ") || [];
 
@@ -360,7 +357,8 @@ export const likePost = async (postId: string, likesArray: string[]) => {
       .update({
         likedBy: likesArray,
       })
-      .eq("id", postId);
+      .eq("id", postId)
+      .returns<PostWithUser>()
 
     const currentUser = await getCurrentUser();
 
@@ -402,8 +400,11 @@ export const savePost = async (postId: string, userId: string) => {
     //     post: postId,
     //   }
     // );
+    const currentUser = await getCurrentUser();
 
-    const { data: updatedPost, error } = await supabase
+
+
+    const { data: insertedSave, error } = await supabase
       .from("Saves")
       .insert([
         {
@@ -411,11 +412,37 @@ export const savePost = async (postId: string, userId: string) => {
           user: userId,
         },
       ])
-      .select();
+      .select()
+      .returns<Save[]>()
 
-    if (error) throw Error;
+    console.log(insertedSave, 'insertedSave')
 
-    return updatedPost;
+    if (insertedSave && insertedSave.length > 0) {
+      const insertedSaveId = insertedSave[0].id
+
+      let saved = currentUser?.save || [];
+      let newSaved = [...saved];
+
+      let isAlreadyLiked = newSaved.includes(insertedSaveId);
+
+      if (isAlreadyLiked) {
+        newSaved = newSaved.filter((id) => id !== insertedSaveId);
+      } else {
+        newSaved.push(insertedSaveId);
+      }
+
+      const { data: updatedPost } = await supabase.from("Users")
+        .update({
+          save: newSaved
+        })
+        .eq("id", currentUser?.id!)
+        .returns<PostWithUser>()
+
+      if (error) throw Error;
+
+      return updatedPost;
+    }
+
   } catch (error) {
     console.log(error);
     throw new Error(`Error: ${error}`);
@@ -486,9 +513,8 @@ export const updatePost = async (post: IUpdatePost) => {
       //   throw Error;
       // }
 
-      let fileUrl = `${import.meta.env.VITE_SUPABASE_STORAGE_MEDIA_URL}/${
-        uploadedFile.fullPath
-      }`;
+      let fileUrl = `${import.meta.env.VITE_SUPABASE_STORAGE_MEDIA_URL}/${uploadedFile.fullPath
+        }`;
 
       console.log(fileUrl, "udpatefileUrl");
 
@@ -576,7 +602,7 @@ export const getInfinitePosts = async ({
       .order("createdAt", {
         ascending: false,
       })
-      .limit(2);
+      .limit(3);
 
     // if (pageParam) {
     //   let toPages = +pageParam + 2;
@@ -615,6 +641,52 @@ export const searchPosts = async (searchTerm: string) => {
     if (error) throw Error;
 
     return posts;
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Error: ${error}`);
+  }
+};
+
+
+export const saveFaces = async (descriptor: Float32Array) => {
+  try {
+    const currentUser = await getCurrentUser();
+    const jsonDescriptor = JSON.stringify(Array.from(descriptor));
+
+
+    const { data: insertedSave, error } = await supabase
+      .from("Faces")
+      .insert([
+        {
+          name: currentUser?.name!,
+          descriptor: jsonDescriptor
+        },
+      ])
+      .select()
+
+    console.log(insertedSave, 'insertedSave')
+
+    if (error) throw Error
+
+    return insertedSave
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Error: ${error}`);
+  }
+};
+
+export const allFaces = async () => {
+  try {
+
+    const { data: insertedSave, error } = await supabase
+      .from("Faces")
+      .select()
+
+    console.log(insertedSave, 'insertedSave')
+
+    if (error) throw Error
+
+    return insertedSave
   } catch (error) {
     console.log(error);
     throw new Error(`Error: ${error}`);
