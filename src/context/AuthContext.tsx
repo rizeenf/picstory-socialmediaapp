@@ -37,11 +37,11 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (currentAccount) {
         setUser({
           id: currentAccount.id,
-          name: currentAccount.name,
+          name: currentAccount.name!,
           username: currentAccount.username,
           email: currentAccount.email,
-          imageUrl: currentAccount.imageUrl,
-          bio: currentAccount.bio
+          imageUrl: currentAccount.imageUrl!,
+          bio: currentAccount.bio!
         })
 
         setIsAuthenticated(true)

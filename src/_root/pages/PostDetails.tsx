@@ -34,7 +34,7 @@ const PostDetails = () => {
 
               <div className="post_details-info">
                 <div className="flex-between w-full">
-                  <Link to={`/profile/${post?.creator.$id}`} className="flex items-center gap-3">
+                  <Link to={`/profile/${post?.creator.id}`} className="flex items-center gap-3">
                     <img
                       src={post?.creator.imageUrl || '/assets/icons/profile-placeholder.svg'}
                       alt="creator"
@@ -46,7 +46,7 @@ const PostDetails = () => {
                       </p>
                       <div className="flex-center gap-2 text-light-3">
                         <p className="subtle-semibold lg:small-regular">
-                          {timeAgo(post?.$createdAt!)}
+                          {timeAgo(post?.createdAt!)}
                         </p>
                         -
                         <p className="subtle-semibold lg:small-regular">
@@ -58,9 +58,9 @@ const PostDetails = () => {
 
                   <div className="flex-center">
                     <Link
-                      to={`/update-post/${post?.$id}`}
+                      to={`/update-post/${post?.id}`}
                       className={
-                        `${user.id !== post?.creator.$id && 'hidden'}`
+                        `${user.id !== post?.creator.id && 'hidden'}`
                       }>
                       <img
                         src="/assets/icons/edit.svg"
@@ -73,7 +73,7 @@ const PostDetails = () => {
                     <Button
                       onClick={handleDelete}
                       variant={"ghost"}
-                      className={`ghost_details-delete_btn hover:invert-dark ${user.id !== post?.creator.$id && 'hidden'}`}
+                      className={`ghost_details-delete_btn hover:invert-dark ${user.id !== post?.creator.id && 'hidden'}`}
                     >
                       <img
                         src="/assets/icons/delete.svg"
