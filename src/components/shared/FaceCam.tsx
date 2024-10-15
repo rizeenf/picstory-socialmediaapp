@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import * as faceapi from 'face-api.js';
-import { Button } from '../ui/button';
-import { toast } from '../ui/use-toast';
-import { Face } from '@/types';
-import { useGetAllFaces, useSaveFaceDescriptors } from '@/lib/react-query/queriesAndMutations';
+import { useCallback, useEffect, useRef, useState } from "react";
+import * as faceapi from "face-api.js";
+import { Button } from "../ui/button";
+import { toast } from "../ui/use-toast";
+import { Face } from "@/types";
+import {
+  useGetAllFaces,
+  useSaveFaceDescriptors,
+} from "@/lib/react-query/queriesAndMutations";
 
 const FaceCam = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -13,17 +16,16 @@ const FaceCam = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [detectedFace, setDetectedFace] = useState<Float32Array | null>(null);
-  const [personName, setPersonName] = useState<string>('');
+  const [personName, setPersonName] = useState<string>("");
   const [isDetecting, setIsDetecting] = useState(false);
   const [isFaceSaved, setIsFaceSaved] = useState(false);
   const [facesData, setFacesData] = useState<Face[] | null>(null);
-  const facesDataArr: string[] = []
+  const facesDataArr: string[] = [];
 
-  const { data: faces, isLoading, isSuccess } = useGetAllFaces()
-  const { mutateAsync: saveFaces } = useSaveFaceDescriptors()
+  const { data: faces, isLoading, isSuccess } = useGetAllFaces();
+  const { mutateAsync: saveFaces } = useSaveFaceDescriptors();
 
   const lastAttendanceMap = useRef<Map<string, number>>(new Map());
-
 
   useEffect(() => {
     if (faces) setFacesData(faces);
@@ -33,14 +35,14 @@ const FaceCam = () => {
     const loadModels = async () => {
       try {
         await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-          faceapi.nets.mtcnn.loadFromUri('/models'),
+          faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
+          faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+          faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
+          faceapi.nets.mtcnn.loadFromUri("/models"),
         ]);
         setModelsLoaded(true);
       } catch (err) {
-        console.error('Failed to load models', err);
+        console.error("Failed to load models", err);
       }
     };
 
@@ -57,13 +59,15 @@ const FaceCam = () => {
     const initializeWebcam = async () => {
       if (modelsLoaded && navigator.mediaDevices.getUserMedia) {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {},
+          });
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
             streamRef.current = stream;
           }
         } catch (err) {
-          console.error('Error accessing webcam: ', err);
+          console.error("Error accessing webcam: ", err);
         }
       }
     };
@@ -72,17 +76,27 @@ const FaceCam = () => {
   }, [modelsLoaded]);
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (modelsLoaded && !isDetecting) {
-        detectFace();
-      }
-    }, 500); // Detect face every 500
+    const intervalId = setInterval(
+      () => {
+        if (modelsLoaded && !isDetecting) {
+          detectFace();
+        }
+      },
+      personName !== "" ? 300 : 1000
+    ); // Detect face every 500
 
     return () => clearInterval(intervalId); // Clean up the interval on unmount
   }, [modelsLoaded, isDetecting]);
 
   const detectFace = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || isDetecting || !videoRef2.current || !canvasRef2.current) return;
+    if (
+      !videoRef.current ||
+      !canvasRef.current ||
+      isDetecting ||
+      !videoRef2.current ||
+      !canvasRef2.current
+    )
+      return;
 
     setIsDetecting(true);
 
@@ -97,77 +111,103 @@ const FaceCam = () => {
       // faceapi.matchDimensions(canvas, displaySize); // Match canvas to video size
       // faceapi.matchDimensions(canvas2, displaySize2); // Match canvas to video size
 
-      const detections = await faceapi.detectSingleFace(video, new faceapi.MtcnnOptions())
+      const detections = await faceapi
+        .detectSingleFace(video)
         .withFaceLandmarks()
         .withFaceDescriptor();
 
-      const detectionsManyFace = await faceapi.detectAllFaces(video2)
+      const detectionsManyFace = await faceapi
+        .detectAllFaces(video2)
         .withFaceLandmarks()
         .withFaceDescriptors();
 
-
       detectionsManyFace.forEach(async (detections) => {
         faceapi.matchDimensions(canvas2, displaySize2); // Match canvas to video size
-        const resizedDetections2 = faceapi.resizeResults(detections, displaySize2);
+        const resizedDetections2 = faceapi.resizeResults(
+          detections,
+          displaySize2
+        );
         const { box } = resizedDetections2.detection;
 
         setDetectedFace(detections.descriptor);
         await checkFace(detections.descriptor);
 
         if (personName) {
-          const textField = new faceapi.draw.DrawTextField([personName], box.bottomLeft, { fontSize: 12 });
+          const textField = new faceapi.draw.DrawTextField(
+            [personName],
+            box.bottomLeft,
+            { fontSize: 12 }
+          );
           textField.draw(canvas2);
         } else {
-          const textField = new faceapi.draw.DrawTextField(['Tidak ditemukan'], box.bottomLeft, { fontSize: 12 });
+          const textField = new faceapi.draw.DrawTextField(
+            ["Tidak ditemukan"],
+            box.bottomLeft,
+            { fontSize: 12 }
+          );
           textField.draw(canvas2);
         }
-
-      })
+      });
 
       if (detections) {
         // console.log('Detections:', detections);
-        console.log('Detections:', detectionsManyFace);
+        console.log("Detections:", detectionsManyFace);
 
-        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        const resizedDetections = faceapi.resizeResults(
+          detections,
+          displaySize
+        );
         setDetectedFace(detections.descriptor);
         await checkFace(detections.descriptor);
 
-        const resizedDetections2 = faceapi.resizeResults(detectionsManyFace, displaySize2);
+        const resizedDetections2 = faceapi.resizeResults(
+          detectionsManyFace,
+          displaySize2
+        );
         // setDetectedFace(detections.descriptor);
         // await checkFace(detections.descriptor);
 
-        const context = canvas.getContext('2d');
+        const context = canvas.getContext("2d");
         context?.clearRect(0, 0, canvas.width, canvas.height);
 
-        const context2 = canvas2.getContext('2d');
+        const context2 = canvas2.getContext("2d");
         context2?.clearRect(0, 0, canvas2.width, canvas2.height);
 
+        faceapi.draw.drawDetections(canvas, resizedDetections);
         faceapi.draw.drawDetections(canvas2, resizedDetections2);
 
         const { box } = resizedDetections.detection;
         if (personName) {
-          const textField = new faceapi.draw.DrawTextField([personName], box.bottomLeft, { fontSize: 12 });
+          const textField = new faceapi.draw.DrawTextField(
+            [personName],
+            box.bottomLeft,
+            { fontSize: 12 }
+          );
           textField.draw(canvas);
         } else {
-          const textField = new faceapi.draw.DrawTextField(['Tidak ditemukan'], box.bottomLeft, { fontSize: 12 });
+          const textField = new faceapi.draw.DrawTextField(
+            ["Tidak ditemukan"],
+            box.bottomLeft,
+            { fontSize: 12 }
+          );
           textField.draw(canvas);
         }
-
       } else {
-        console.warn('No detections');
+        console.warn("No detections");
       }
-
     }
 
     setIsDetecting(false); // Reset detection state
-  }, [detectedFace])
+  }, [detectedFace]);
 
   const checkFace = async (descriptor: Float32Array) => {
     let bestMatch: string | null = null;
     let smallestDistance = Infinity;
 
     facesData?.forEach((face: Face) => {
-      const savedDescriptor = new Float32Array(JSON.parse(face.descriptor as string));
+      const savedDescriptor = new Float32Array(
+        JSON.parse(face.descriptor as string)
+      );
       const distance = faceapi.euclideanDistance(descriptor, savedDescriptor);
 
       if (distance < smallestDistance) {
@@ -176,28 +216,34 @@ const FaceCam = () => {
       }
     });
 
-    const THRESHOLD = 0.4;
+    const THRESHOLD = 0.5;
     if (smallestDistance < THRESHOLD && bestMatch) {
       setPersonName(bestMatch);
-      console.log(`Face recognized: ${bestMatch}`)
+      console.log(`Face recognized: ${bestMatch}`);
 
-      facesDataArr.push(bestMatch)
+      facesDataArr.push(bestMatch);
       // toast({ title: `Face recognized: ${bestMatch.name}` });
     } else {
-      setPersonName('');
+      setPersonName("");
       // toast({ title: 'Face not recognized' });
     }
   };
 
   const handleSaveFace = async () => {
     if (detectedFace) {
-      const lastAttendance = lastAttendanceMap.current.get(detectedFace.toString());
+      const lastAttendance = lastAttendanceMap.current.get(
+        detectedFace.toString()
+      );
       const currentTime = Date.now();
 
       if (lastAttendance && currentTime - lastAttendance < 10 * 60 * 1000) {
         // If last attendance was less than 10 minutes ago, skip saving
-        console.log(`Skipping save for ${detectedFace}, attended within 10 minutes.`);
-        toast({ title: `${detectedFace} has already been marked within the last 10 minutes.` });
+        console.log(
+          `Skipping save for ${detectedFace}, attended within 10 minutes.`
+        );
+        toast({
+          title: `${detectedFace} has already been marked within the last 10 minutes.`,
+        });
         return;
       }
 
@@ -208,25 +254,72 @@ const FaceCam = () => {
     if (detectedFace && !isFaceSaved) {
       await saveFaces(detectedFace);
       setIsFaceSaved(true);
-      toast({ title: 'Face saved successfully!' });
+      toast({ title: "Face saved successfully!" });
     } else {
-      toast({ title: 'No face detected to save.' });
+      toast({ title: "No face detected to save." });
     }
   };
-  console.log('Models loaded:', modelsLoaded);
+  console.log("Models loaded:", modelsLoaded);
   if (videoRef.current && videoRef.current.readyState === 4) {
     const video = videoRef.current;
     // Proceed with detection
-    console.log(video, 'video')
+    console.log(video, "video");
   } else {
-    console.warn('Webcam not ready for detection');
+    console.warn("Webcam not ready for detection");
   }
-
-
   return (
-    <div>
+    <div className="max-h-screen max-w-screen flex flex-col items-center">
       <h1>Face Recognition</h1>
-      <>
+
+      {personName && (
+        <div>
+          <p>Recognized: {personName}</p>
+        </div>
+      )}
+      {facesDataArr && (
+        <div>
+          <p>Recognized: {facesDataArr}</p>
+        </div>
+      )}
+
+      {/* Kamera dan Canvas untuk Face Recognition */}
+      <div className="relative mb-5">
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          width={320}
+          height={240}
+          className="relative z-[1]"
+        />
+        <canvas
+          ref={canvasRef}
+          width={320}
+          height={240}
+          className="absolute top-0 left-0 z-[2]"
+        />
+      </div>
+
+      {/* Image dan Canvas tambahan */}
+      <div className="relative mb-5">
+        <img
+          ref={videoRef2}
+          width={50}
+          height={50}
+          style={{ position: "relative", zIndex: 1 }}
+          src="/assets/ifca.jpeg"
+        />
+        <canvas
+          ref={canvasRef2}
+          width={50}
+          height={50}
+          className="absolute "
+          style={{ position: "absolute", top: 0, left: 0, zIndex: 2 }}
+        />
+      </div>
+
+      {/* Button Section with Flexbox */}
+      <div className="flex justify-center items-center mt-5 space-x-4 z-10">
         <Button
           size="lg"
           className="p-5"
@@ -239,45 +332,7 @@ const FaceCam = () => {
         <Button size="lg" onClick={detectFace}>
           Scan Face Now
         </Button>
-        {personName && <div><p>Recognized: {personName}</p></div>}
-        {facesDataArr && <div><p>Recognized: {facesDataArr}</p></div>}
-
-        <div style={{ position: 'relative' }}>
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            width={270}
-            height={200}
-            style={{ position: 'absolute', top: 0, left: 0 }}
-          />
-          <canvas
-            ref={canvasRef}
-            width={270}
-            height={200}
-            style={{ position: 'absolute', top: 0, left: 0 }}
-          />
-        </div>
-        <div style={{ position: 'relative' }}>
-          <img
-            ref={videoRef2}
-            width={1270}
-            height={1200}
-            style={{ position: 'absolute', top: 0, left: 350 }}
-            src='/assets/ifca.jpeg'
-          />
-          <canvas
-            ref={canvasRef2}
-            width={1270}
-            height={1200}
-            style={{ position: 'absolute', top: 0, left: 350 }}
-          />
-        </div>
-
-        {/* <video ref={videoRef} autoPlay muted width={270} height={156} /> */}
-
-
-      </>
+      </div>
     </div>
   );
 };
