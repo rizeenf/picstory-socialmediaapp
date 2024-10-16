@@ -113,7 +113,7 @@ const FaceCam = () => {
     // const canvas2 = canvasRef2.current;
 
     if (video && canvas) {
-      const displaySize = { width: video.width, height: video.height };
+      const displaySize = { width: video.videoWidth, height: video.videoHeight };
       // const displaySize2 = { width: video2.width, height: video2.height };
       faceapi.matchDimensions(canvas, displaySize); // Match canvas to video size
       // faceapi.matchDimensions(canvas2, displaySize2); // Match canvas to video size
@@ -295,13 +295,13 @@ const FaceCam = () => {
         <Webcam
           ref={videoRef}
           onPlay={detectFace}
-          width={240}
-          height={320}
+          // width={240}
+          // height={320}
           videoConstraints={{
             facingMode: "user",
             aspectRatio: 3 / 4,
-            width: 240,
-            height: 320
+            // width: 240,
+            // height: 320
           }}
         />
         {/* <Camera
@@ -348,14 +348,20 @@ const FaceCam = () => {
       <div className="flex justify-center items-center mt-5 space-x-4 z-10">
         <Button
           size="lg"
-          className="p-5"
+          className={`p-5 text-lg rounded-lg ${isFaceSaved
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-gray-900 hover:scale-105 active:scale-95 transition transform outline outline-dark-4 outline-1'
+            } text-white`}  
           onClick={handleSaveFace}
           disabled={isFaceSaved}
         >
           Save Face
         </Button>
 
-        <Button size="lg" onClick={detectFace}>
+        <Button
+          className="p-5 text-lg rounded-lg bg-gray-900 hover:scale-105 active:scale-95 transition transform text-white ml-4  outline outline-dark-4 outline-1"
+          size="lg"
+          onClick={detectFace}>
           Scan Face Now
         </Button>
       </div>
