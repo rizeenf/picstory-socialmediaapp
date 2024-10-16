@@ -275,7 +275,7 @@ const FaceCam = () => {
     console.warn("Webcam not ready for detection");
   }
   return (
-    <div className="max-h-screen max-w-screen flex flex-col items-center">
+    <div className="max-h-screen max-w-screen flex flex-col justify-center items-center">
       <h1>Face Recognition</h1>
 
       {personName && (
@@ -290,14 +290,14 @@ const FaceCam = () => {
       )}
 
       {/* Kamera dan Canvas untuk Face Recognition */}
-      <div className="relative mb-5">
+      <div className="relative justify-center items-center w-full mb-5">
 
         <Webcam
           ref={videoRef}
           onPlay={detectFace}
           // width={240}
           // height={320}
-          className="w-full max-w-md h-auto md:max-w-lg rounded"  // Responsif dengan Tailwind
+          className="w-full h-auto max-w-full aspect-ratio-[3/4] md:max-w-lg md:h-auto rounded"  // Responsif dengan Tailwind
           videoConstraints={{
             facingMode: "user",
             aspectRatio: 3 / 4,
