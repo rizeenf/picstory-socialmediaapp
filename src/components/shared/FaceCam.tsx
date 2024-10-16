@@ -7,12 +7,18 @@ import {
   useGetAllFaces,
   useSaveFaceDescriptors,
 } from "@/lib/react-query/queriesAndMutations";
+// import Camera from 'react-html5-camera-photo';
+import 'react-html5-camera-photo/build/css/index.css';
+// import { Camera } from 'react-camera-pro'
+import Webcam from "react-webcam";
+// import Camera from "react-html5-camera-photo";
+
 
 const FaceCam = () => {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<any>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const videoRef2 = useRef<HTMLImageElement | null>(null);
-  const canvasRef2 = useRef<HTMLCanvasElement | null>(null);
+  // const videoRef2 = useRef<HTMLImageElement | null>(null);
+  // const canvasRef2 = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [detectedFace, setDetectedFace] = useState<Float32Array | null>(null);
@@ -55,25 +61,25 @@ const FaceCam = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const initializeWebcam = async () => {
-      if (modelsLoaded && navigator.mediaDevices.getUserMedia) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {},
-          });
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            streamRef.current = stream;
-          }
-        } catch (err) {
-          console.error("Error accessing webcam: ", err);
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const initializeWebcam = async () => {
+  //     if (modelsLoaded && navigator.mediaDevices.getUserMedia) {
+  //       try {
+  //         const stream = await navigator.mediaDevices.getUserMedia({
+  //           video: {},
+  //         });
+  //         if (videoRef.current) {
+  //           videoRef.current.srcObject = stream;
+  //           streamRef.current = stream;
+  //         }
+  //       } catch (err) {
+  //         console.error("Error accessing webcam: ", err);
+  //       }
+  //     }
+  //   };
 
-    initializeWebcam();
-  }, [modelsLoaded]);
+  //   initializeWebcam();
+  // }, [modelsLoaded]);
 
   useEffect(() => {
     const intervalId = setInterval(
@@ -92,22 +98,23 @@ const FaceCam = () => {
     if (
       !videoRef.current ||
       !canvasRef.current ||
-      isDetecting ||
-      !videoRef2.current ||
-      !canvasRef2.current
+      isDetecting
+      // ||
+      // !videoRef2.current ||
+      // !canvasRef2.current
     )
       return;
 
     setIsDetecting(true);
 
-    const video = videoRef.current;
-    const video2 = videoRef2.current;
+    const video = videoRef.current.video as any;
+    // const video2 = videoRef2.current;
     const canvas = canvasRef.current;
-    const canvas2 = canvasRef2.current;
+    // const canvas2 = canvasRef2.current;
 
     if (video && canvas) {
-      const displaySize = { width: video.width, height: video.height };
-      const displaySize2 = { width: video2.width, height: video2.height };
+      const displaySize = { width: 320, height: 240 };
+      // const displaySize2 = { width: video2.width, height: video2.height };
       // faceapi.matchDimensions(canvas, displaySize); // Match canvas to video size
       // faceapi.matchDimensions(canvas2, displaySize2); // Match canvas to video size
 
@@ -116,42 +123,42 @@ const FaceCam = () => {
         .withFaceLandmarks()
         .withFaceDescriptor();
 
-      const detectionsManyFace = await faceapi
-        .detectAllFaces(video2)
-        .withFaceLandmarks()
-        .withFaceDescriptors();
+      // const detectionsManyFace = await faceapi
+      //   .detectAllFaces(video2)
+      //   .withFaceLandmarks()
+      //   .withFaceDescriptors();
 
-      detectionsManyFace.forEach(async (detections) => {
-        faceapi.matchDimensions(canvas2, displaySize2); // Match canvas to video size
-        const resizedDetections2 = faceapi.resizeResults(
-          detections,
-          displaySize2
-        );
-        const { box } = resizedDetections2.detection;
+      // detectionsManyFace.forEach(async (detections) => {
+      //   faceapi.matchDimensions(canvas2, displaySize2); // Match canvas to video size
+      //   const resizedDetections2 = faceapi.resizeResults(
+      //     detections,
+      //     displaySize2
+      //   );
+      //   const { box } = resizedDetections2.detection;
 
-        setDetectedFace(detections.descriptor);
-        await checkFace(detections.descriptor);
+      //   setDetectedFace(detections.descriptor);
+      //   await checkFace(detections.descriptor);
 
-        if (personName) {
-          const textField = new faceapi.draw.DrawTextField(
-            [personName],
-            box.bottomLeft,
-            { fontSize: 12 }
-          );
-          textField.draw(canvas2);
-        } else {
-          const textField = new faceapi.draw.DrawTextField(
-            ["Tidak ditemukan"],
-            box.bottomLeft,
-            { fontSize: 12 }
-          );
-          textField.draw(canvas2);
-        }
-      });
+      //   if (personName) {
+      //     const textField = new faceapi.draw.DrawTextField(
+      //       [personName],
+      //       box.bottomLeft,
+      //       { fontSize: 12 }
+      //     );
+      //     textField.draw(canvas2);
+      //   } else {
+      //     const textField = new faceapi.draw.DrawTextField(
+      //       ["Tidak ditemukan"],
+      //       box.bottomLeft,
+      //       { fontSize: 12 }
+      //     );
+      //     textField.draw(canvas2);
+      //   }
+      // });
 
       if (detections) {
         // console.log('Detections:', detections);
-        console.log("Detections:", detectionsManyFace);
+        // console.log("Detections:", detectionsManyFace);
 
         const resizedDetections = faceapi.resizeResults(
           detections,
@@ -160,21 +167,21 @@ const FaceCam = () => {
         setDetectedFace(detections.descriptor);
         await checkFace(detections.descriptor);
 
-        const resizedDetections2 = faceapi.resizeResults(
-          detectionsManyFace,
-          displaySize2
-        );
+        // const resizedDetections2 = faceapi.resizeResults(
+        //   detectionsManyFace,
+        //   displaySize2
+        // );
         // setDetectedFace(detections.descriptor);
         // await checkFace(detections.descriptor);
 
         const context = canvas.getContext("2d");
         context?.clearRect(0, 0, canvas.width, canvas.height);
 
-        const context2 = canvas2.getContext("2d");
-        context2?.clearRect(0, 0, canvas2.width, canvas2.height);
+        // const context2 = canvas2.getContext("2d");
+        // context2?.clearRect(0, 0, canvas2.width, canvas2.height);
 
         faceapi.draw.drawDetections(canvas, resizedDetections);
-        faceapi.draw.drawDetections(canvas2, resizedDetections2);
+        // faceapi.draw.drawDetections(canvas2, resizedDetections2);
 
         const { box } = resizedDetections.detection;
         if (personName) {
@@ -284,14 +291,26 @@ const FaceCam = () => {
 
       {/* Kamera dan Canvas untuk Face Recognition */}
       <div className="relative mb-5">
-        <video
+
+        <Webcam
+          ref={videoRef}
+          width={320}
+          height={240}
+        />
+        {/* <Camera
+          ref={videoRef}
+          errorMessages={{}}
+          // onCameraStart={() => { detectFace }}
+        /> */}
+
+        {/* <video
           ref={videoRef}
           autoPlay
           muted
           width={320}
           height={240}
           className="relative z-[1]"
-        />
+        /> */}
         <canvas
           ref={canvasRef}
           width={320}
@@ -301,7 +320,7 @@ const FaceCam = () => {
       </div>
 
       {/* Image dan Canvas tambahan */}
-      <div className="relative mb-5">
+      {/* <div className="relative mb-5">
         <img
           ref={videoRef2}
           width={50}
@@ -316,7 +335,7 @@ const FaceCam = () => {
           className="absolute "
           style={{ position: "absolute", top: 0, left: 0, zIndex: 2 }}
         />
-      </div>
+      </div> */}
 
       {/* Button Section with Flexbox */}
       <div className="flex justify-center items-center mt-5 space-x-4 z-10">
