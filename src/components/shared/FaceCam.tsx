@@ -297,6 +297,7 @@ const FaceCam = () => {
           onPlay={detectFace}
           // width={240}
           // height={320}
+          className="w-full max-w-md h-auto md:max-w-lg rounded"  // Responsif dengan Tailwind
           videoConstraints={{
             facingMode: "user",
             aspectRatio: 3 / 4,
