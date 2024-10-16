@@ -88,7 +88,7 @@ const FaceCam = () => {
           detectFace();
         }
       },
-      personName !== "" ? 300 : 1000
+      personName !== "" ? 1000 : 250
     ); // Detect face every 500
 
     return () => clearInterval(intervalId); // Clean up the interval on unmount
@@ -113,9 +113,9 @@ const FaceCam = () => {
     // const canvas2 = canvasRef2.current;
 
     if (video && canvas) {
-      const displaySize = { width: 320, height: 240 };
+      const displaySize = { width: video.width, height: video.height };
       // const displaySize2 = { width: video2.width, height: video2.height };
-      // faceapi.matchDimensions(canvas, displaySize); // Match canvas to video size
+      faceapi.matchDimensions(canvas, displaySize); // Match canvas to video size
       // faceapi.matchDimensions(canvas2, displaySize2); // Match canvas to video size
 
       const detections = await faceapi
@@ -294,8 +294,15 @@ const FaceCam = () => {
 
         <Webcam
           ref={videoRef}
-          width={320}
-          height={240}
+          onPlay={detectFace}
+          width={240}
+          height={320}
+          videoConstraints={{
+            facingMode: "user",
+            aspectRatio: 3 / 4,
+            width: 240,
+            height: 320
+          }}
         />
         {/* <Camera
           ref={videoRef}
