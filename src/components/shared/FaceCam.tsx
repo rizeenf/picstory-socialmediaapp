@@ -26,6 +26,7 @@ const FaceCam = () => {
   const [isDetecting, setIsDetecting] = useState(false);
   const [isFaceSaved, setIsFaceSaved] = useState(false);
   const [facesData, setFacesData] = useState<Face[] | null>(null);
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
   const facesDataArr: string[] = [];
 
   const { data: faces, isLoading, isSuccess } = useGetAllFaces();
@@ -44,6 +45,7 @@ const FaceCam = () => {
           faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
           faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
           faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
+          faceapi.nets.faceExpressionNet.loadFromUri("/models"),
           faceapi.nets.mtcnn.loadFromUri("/models"),
         ]);
         setModelsLoaded(true);
@@ -121,6 +123,7 @@ const FaceCam = () => {
       const detections = await faceapi
         .detectSingleFace(video)
         .withFaceLandmarks()
+        .withFaceExpressions()
         .withFaceDescriptor();
 
       // const detectionsManyFace = await faceapi
@@ -193,7 +196,7 @@ const FaceCam = () => {
           textField.draw(canvas);
         } else {
           const textField = new faceapi.draw.DrawTextField(
-            ["Tidak ditemukan"],
+            ["Tidak dikenali"],
             box.bottomLeft,
             { fontSize: 12 }
           );
@@ -274,6 +277,17 @@ const FaceCam = () => {
   } else {
     console.warn("Webcam not ready for detection");
   }
+
+  const handleCaptureImg = useCallback(
+    () => {
+      setImgSrc(videoRef.current.getScreenshot())
+
+      console.log(imgSrc, 'imgSrc')
+    },
+    [videoRef]
+  )
+
+
   return (
     <div className="max-h-screen max-w-screen flex flex-col justify-center items-center">
       <h1>Face Recognition</h1>
@@ -352,7 +366,7 @@ const FaceCam = () => {
           className={`p-5 text-lg rounded-lg ${isFaceSaved
             ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-gray-900 hover:scale-105 active:scale-95 transition transform outline outline-dark-4 outline-1'
-            } text-white`}  
+            } text-white`}
           onClick={handleSaveFace}
           disabled={isFaceSaved}
         >
@@ -365,7 +379,26 @@ const FaceCam = () => {
           onClick={detectFace}>
           Scan Face Now
         </Button>
+
+        <Button
+          className="p-5 text-lg rounded-lg bg-gray-900 hover:scale-105 active:scale-95 transition transform text-white ml-4  outline outline-dark-4 outline-1"
+          size="lg"
+          onClick={handleCaptureImg}>
+          Capture
+        </Button>
       </div>
+
+      {imgSrc ?
+        <img
+          src={imgSrc}
+          width={200}
+          height={200}
+        />
+        :
+        <>
+        </>
+      }
+
     </div>
   );
 };
