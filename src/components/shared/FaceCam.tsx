@@ -308,15 +308,15 @@ const FaceCam = () => {
 
         <Webcam
           ref={videoRef}
-          onPlay={detectFace}
-          // width={240}
-          // height={320}
+          // onPlay={detectFace}
+          width={240}
+          height={320}
           className="w-full h-auto max-w-full aspect-ratio-[3/4] md:max-w-lg md:h-auto rounded"  // Responsif dengan Tailwind
           videoConstraints={{
             facingMode: "user",
             aspectRatio: 3 / 4,
-            // width: 240,
-            // height: 320
+            width: 240,
+            height: 320
           }}
         />
         {/* <Camera
